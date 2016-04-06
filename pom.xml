@@ -18,6 +18,7 @@
 	<properties>
 		<dist.key>DATACMNS</dist.key>
 		<scala>2.11.7</scala>
+		<reactor>2.5.0.M2</reactor>
 	</properties>
 
 	<dependencies>
@@ -92,6 +93,15 @@
 			<groupId>org.threeten</groupId>
 			<artifactId>threetenbp</artifactId>
 			<version>${threetenbp}</version>
+			<optional>true</optional>
+		</dependency>
+
+		<!--  Project Reactor -->
+
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+			<version>${reactor}</version>
 			<optional>true</optional>
 		</dependency>
 
