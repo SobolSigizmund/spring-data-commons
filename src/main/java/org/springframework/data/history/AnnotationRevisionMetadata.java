@@ -25,7 +25,7 @@ import org.springframework.util.ReflectionUtils;
 /**
  * A {@link RevisionMetadata} implementation that inspects the given object for fields with the configured annotations
  * and returns the field's values on calls to {@link #getRevisionDate()} and {@link #getRevisionNumber()}.
- * 
+ *
  * @author Oliver Gierke
  */
 public class AnnotationRevisionMetadata<N extends Number & Comparable<N>> implements RevisionMetadata<N> {
@@ -37,7 +37,7 @@ public class AnnotationRevisionMetadata<N extends Number & Comparable<N>> implem
 	/**
 	 * Creates a new {@link AnnotationRevisionMetadata} inspecing the given entity for the given annotations. If no
 	 * annotations will be provided these values will not be looked up from the entity and return {@literal null}.
-	 * 
+	 *
 	 * @param entity must not be {@literal null}.
 	 * @param revisionNumberAnnotation
 	 * @param revisionTimeStampAnnotation
@@ -60,7 +60,7 @@ public class AnnotationRevisionMetadata<N extends Number & Comparable<N>> implem
 			AnnotationDetectionFieldCallback revisionCallback = new AnnotationDetectionFieldCallback(
 					revisionTimeStampAnnotation);
 			ReflectionUtils.doWithFields(entity.getClass(), revisionCallback);
-			this.revisionDate = new DateTime(revisionCallback.getValue(entity));
+			this.revisionDate = new DateTime((Object) revisionCallback.getValue(entity));
 		} else {
 			this.revisionDate = null;
 		}
