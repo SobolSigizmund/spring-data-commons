@@ -1,18 +1,52 @@
-language: java
-jdk:
-  - oraclejdk8
-env:
-  matrix:
-    - PROFILE=ci
-    - PROFILE=spring42-next
-    - PROFILE=spring43-next
-    - PROFILE=querydsl-next
+addons: {}
+after_success:
+- export JAVA_TOOL_OPTIONS=-javaagent:$DFB_PROJECT_DIR/jacoco-agent-jdk8.jar=destfile=$DFB_PROJECT_DIR/jacoco.exec
+- mvn test -Djacoco.skip=true -Dcobertura.skip=true -Dmaven.clover.skip=true clean
+  dependency:list test -P${PROFILE} -Dsort
+- ./df-build.sh
+- env > env.file
+- curl -sL https://raw.githubusercontent.com/travis-ci/artifacts/master/install |
+  bash
+- artifacts upload --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY --bucket
+  $DFB_AWS_BUCKET --target-paths $DFB_AWS_BUILD_PATH $(git ls-files -oi -x *.exec)
+- artifacts upload --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY --bucket
+  $DFB_AWS_BUCKET --target-paths $DFB_AWS_BUILD_PATH ${DFB_PROJECT_DIR}/env.file
+before_install:
+- wget -O beforebuild.sh $DFB_AGENTS_URL/beforebuild.sh
+- chmod a+x beforebuild.sh
+- ./beforebuild.sh
 cache:
   directories:
-    - $HOME/.m2
-sudo: false
+  - $HOME/.m2
+env:
+  global:
+  - DFB_PROJECT_DIR=$(pwd)
+  - TMP_PROJECT_PARENT_DIR=$(dirname $DFB_PROJECT_DIR)
+  - DFB_BUILD_ID=$TRAVIS_BUILD_ID
+  - DFB_PRODUCT_NAME=$(basename $DFB_PROJECT_DIR)
+  - DFB_OWNER_NAME=$(basename $TMP_PROJECT_PARENT_DIR)
+  - DFB_PRODUCT_KEY=${DFB_OWNER_NAME}_${DFB_PRODUCT_NAME}
+  - DFB_AWS_BUCKET=aline-external-ci-artifacts
+  - DFB_AGENTS_URL=https://s3.amazonaws.com/${DFB_AWS_BUCKET}/agents
+  - DFB_PACKAGING_URL=s3://${DFB_AWS_BUCKET}/artifacts/travis/
+  - DFB_AWS_BUILD_PATH=/artifacts/travis/${DFB_PRODUCT_KEY}/${DFB_BUILD_ID}/output/
+  - AWS_ACCESS_KEY_ID=AKIAIIU2LBOCCKXAIFZQ
+  - AWS_SECRET_ACCESS_KEY=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
+  - DFB_JTO=-javaagent:${DFB_PROJECT_DIR}/dfbuild-agent.jar=PACKAGING_BASE_URI=$DFB_PACKAGING_URL,PRODUCT_KEY=$DFB_PRODUCT_KEY/,BUILD_KEY=$DFB_BUILD_ID/,MODULES_KEY=modules/,START_TIME=0,BUILD_BASE_DIR=$DFB_PROJECT_DIR
+  matrix:
+  - PROFILE=ci
+  - PROFILE=spring42-next
+  - PROFILE=spring43-next
+  - PROFILE=querydsl-next
 install: true
-script: "mvn clean dependency:list test -P${PROFILE} -Dsort"
-notifications:
-  slack:
-    secure: PWyr3+7uTnHzZSrJY2DrowwdYODlIeFZB6tzuq+i/vYqMlX2GGXGQN9YmqbKPeaVZBdSI7YrI1UDa5cPAAXoTjn/JewkL0RbdTeIS6PGCpcpAb5rFMYtOhEDBrFB/SRiMH4tw86bRNKq/SrUWmpkzDtTzLrw7JceumgyqnrT6GY=
+jdk:
+- oraclejdk8
+language: java
+notifications: {}
+script:
+- export JAVA_TOOL_OPTIONS=$DFB_JTO
+- mvn clean
+- mvn -Djacoco.skip=true -Dcobertura.skip=true -Dmaven.clover.skip=true clean dependency:list
+  test -P${PROFILE} -Dsort
+sudo: false
+# Modified by IntegrationTestInstrumentation at 2016-05-12 02:14:43.444003
